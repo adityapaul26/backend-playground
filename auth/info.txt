@@ -1,0 +1,12 @@
+1. Validation
+The process of checking if the provided data or credentials meet specific criteria, formats, or business rules before they are processed by the system (e.g., checking if a password meets complexity requirements).
+
+2. Authentication (Verification)
+The process of proving that the claimed identity is valid. This is usually done by providing something the user knows (password), something they have (security token), or something they are (biometrics).
+
+3. Identification
+The process where an entity (user or system) provides a claim of identity to a system, typically through a unique identifier like a username, email address, or ID number.
+
+4. Authorization
+The process of determining which actions an authenticated user is permitted to perform or which resources they are allowed to access based on their identity and assigned permissions.
+
