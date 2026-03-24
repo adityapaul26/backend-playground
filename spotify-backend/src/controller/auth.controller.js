@@ -35,6 +35,17 @@ const registerUser = async (req, res) => {
     }, process.env.JWT_SECRET)
 
     res.cookie("token", token)
+
+    res.status(200).json({
+        "message": "User created Successfully",
+        "user": {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        }
+    })
+
 }
 
 

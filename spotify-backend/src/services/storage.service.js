@@ -7,7 +7,7 @@ const client = new ImageKit({
 async function uploadFile(file) {
     const result = await client.files.upload({
         file,
-        filename: "music_" + Date.now(),
+        fileName: "music_" + Date.now(),
         folder: "yt_backend"
     })
 
