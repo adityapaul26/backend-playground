@@ -76,7 +76,16 @@ async function getAllMusic(req, res) {
 
 async function getAllAlbums(req, res) {
 
-    const albums = albumModel.find()
+    // find() fetches all the song that could crash our server .. so we limit the number of songs that
+    // it loads with limit()
+
+    const albums = await albumModel
+        .find()
+        .skip(1)
+        .limit(2)// used to implement pagination
+        .select("title artist")
+        .populate("artist", "username email")
+        .populate("musics")
 
     return res.status(200).json({
         message: "All albums fetched",
@@ -84,4 +93,18 @@ async function getAllAlbums(req, res) {
     })
 }
 
-module.exports = { createMusic, createAlbum, getAllMusic, getAllAlbums }
+async function getAlbumById(req, res) {
+
+    const albumId = req.params.id
+    const album = await albumModel
+        .find({ _id: albumId })
+        .populate("artist", "username email")
+
+    return res.status(200).json({
+        message: "Album fetched",
+        album: album
+    })
+
+}
+
+module.exports = { createMusic, createAlbum, getAllMusic, getAllAlbums, getAlbumById }
