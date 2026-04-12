@@ -1,7 +1,9 @@
 import userModel from "../models/user.model.js";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import { config } from "../config/config.js";
 
-export async function register(req, res) {
+async function register(req, res) {
   try {
     const { username, email, password } = req.body;
 
@@ -26,6 +28,15 @@ export async function register(req, res) {
       password: hashedPassword,
     });
 
+    const token = jwt.sign(
+      {
+        id: user._id,
+      },
+      config.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      },
+    );
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -41,3 +52,18 @@ export async function register(req, res) {
     });
   }
 }
+
+async function getMe(req, res) {
+  const token = req.headers.authorization?.split(" ")[1]; // from frontend it is sent as 'Bearer token' .therefore it
+  // is accessed by splitting and choosing the second one
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Token not present",
+    });
+  }
+
+  const decoded = jwt.verify(token, config.JWT_SECRET);
+}
+
+export default { register, getMe };
