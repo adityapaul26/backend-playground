@@ -3,7 +3,12 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config.js";
 
-async function register(req, res) {
+/**
+ * Registers a new user, hashes their password, and issues JWT tokens.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+export async function register(req, res) {
   try {
     const { username, email, password } = req.body;
 
@@ -28,15 +33,32 @@ async function register(req, res) {
       password: hashedPassword,
     });
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       {
         id: user._id,
       },
       config.JWT_SECRET,
       {
-        expiresIn: "1d",
+        expiresIn: "15m",
       },
     );
+    const refreshToken = jwt.sign(
+      {
+        id: user._id,
+      },
+      config.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, //7 days
+    });
+
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -44,6 +66,7 @@ async function register(req, res) {
         username: user.username,
         email: user.email,
       },
+      accessToken,
     });
   } catch (error) {
     res.status(500).json({
@@ -53,17 +76,77 @@ async function register(req, res) {
   }
 }
 
-async function getMe(req, res) {
-  const token = req.headers.authorization?.split(" ")[1]; // from frontend it is sent as 'Bearer token' .therefore it
-  // is accessed by splitting and choosing the second one
+export async function getMe(req, res) {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({
-      message: "Token not present",
+    if (!token) {
+      return res.status(401).json({
+        message: "Token not present",
+      });
+    }
+
+    const decoded = jwt.verify(token, config.JWT_SECRET);
+    const user = await userModel.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    res.status(401).json({
+      message: "Invalid or expired token",
+      error: error.message,
+    });
+  }
+}
+
+export async function refreshToken(req, res) {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.send(401).json({
+      message: "Unauthorized",
     });
   }
 
-  const decoded = jwt.verify(token, config.JWT_SECRET);
-}
+  const decoded = jwt.verify(refreshToken, config.JWT_SECRET);
 
-export default { register, getMe };
+  const accessToken = jwt.sign(
+    {
+      id: decoded._id,
+    },
+    config.JWT_SECRET,
+    {
+      expiresIn: "15m",
+    },
+  );
+
+  const newRefreshToken = jwt.sign(
+    {
+      id: decoded._id,
+    },
+    config.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  res.cookie("refreshToken", newRefreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    message: "Access token generated successfully",
+    accessToken,
+  });
+}

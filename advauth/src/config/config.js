@@ -9,4 +9,5 @@ if (!process.env.MONGO_URI) {
 export const config = {
   MONGO_URI: process.env.MONGO_URI,
   port: process.env.PORT || 5000,
+  JWT_SECRET: process.env.JWT_SECRET,
 };
