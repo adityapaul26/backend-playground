@@ -6,6 +6,7 @@ import {
   logout,
   logoutAll,
   login,
+  verifyEmail,
 } from "../controller/auth.controller.js";
 
 const router = express.Router();
@@ -15,7 +16,9 @@ const router = express.Router();
  */
 router.post("/register", register);
 
-router.post("login", login);
+router.post("/login", login);
+
+router.post("/verify-otp", verifyEmail);
 
 router.get("/getme", getMe);
 
